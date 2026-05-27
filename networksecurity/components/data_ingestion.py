@@ -1,7 +1,7 @@
 from networksecurity.exception.exception import NetworkSecurityException
 from networksecurity.entity.config_entity import DataIngestionConfig
 from networksecurity.logging.logger import logging
-from networksecurity.entity.arifact_entity import DataIngestionArtifact
+from networksecurity.entity.artifact_entity import DataIngestionArtifact
 import sys
 import os
 import pandas as pd

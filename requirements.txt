@@ -6,4 +6,7 @@ pymongo
 certifi
 typing
 scikit-learn
+dill
+pyaml
+scipy
 # -e .

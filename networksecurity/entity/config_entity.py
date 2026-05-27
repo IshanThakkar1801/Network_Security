@@ -20,12 +20,12 @@ class TrainingPipelineConfig:
 class DataIngestionConfig:
     def __init__(self,training_pipeline_config: TrainingPipelineConfig):
         try:
-            self.data_ingestion_dir = os.path.join(training_pipeline.DATA_INGESTION_DIR, training_pipeline_config.artifact_dir)
-            self.feature_store_file_path = os.path.join(self.data_ingestion_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.FILE_NAME)
-            self.training_file_path = os.path.join(self.data_ingestion_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TRAIN_FILE_NAME)
-            self.testing_file_path = os.path.join(self.data_ingestion_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TEST_FILE_NAME)
+            self.data_ingestion_dir = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.DATA_INGESTION_DIR_NAME)
+            self.feature_store_file_path = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.DATA_INGESTION_FEATURE_STORE_NAME, training_pipeline.FILE_NAME)
+            self.training_file_path = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TRAIN_FILE_NAME)
+            self.testing_file_path = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.DATA_INGESTION_INGESTED_DIR, training_pipeline.TEST_FILE_NAME)
 
-            self.train_test_split_ratio: float = training_pipeline.TRAIN_TEST_SPLIT_RATIO
+            self.train_test_split_ratio: float = training_pipeline.DATA_INGESTION_TRAIN_TEST_SPLIT_RATIO
             self.collection_name: str = training_pipeline.DATA_INGESTION_COLLECTION_NAME
             self.database_name: str = training_pipeline.DATA_INGESTION_DATABASE_NAME
         except Exception as e:

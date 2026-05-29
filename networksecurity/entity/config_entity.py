@@ -13,8 +13,9 @@ class TrainingPipelineConfig:
             self.artifsact_name = training_pipeline.ARTIFACT_DIR
             self.artifact_dir = os.path.join(self.artifsact_name, timestamp)
             self.timestamp: str = timestamp
+            logging.info(f"TrainingPipelineConfig initialized with artifact_dir: {self.artifact_dir}")
         except Exception as e:
-            logging.error(f"Error initializing TrainingPipelineConfig: {e}")
+            logging.exception("Error initializing TrainingPipelineConfig")
             raise NetworkSecurityException(e, sys)
 
 class DataIngestionConfig:
@@ -28,8 +29,12 @@ class DataIngestionConfig:
             self.train_test_split_ratio: float = training_pipeline.DATA_INGESTION_TRAIN_TEST_SPLIT_RATIO
             self.collection_name: str = training_pipeline.DATA_INGESTION_COLLECTION_NAME
             self.database_name: str = training_pipeline.DATA_INGESTION_DATABASE_NAME
+            logging.info("DataIngestionConfig initialized")
+            logging.info(f"Feature store path: {self.feature_store_file_path}")
+            logging.info(f"Training file path: {self.training_file_path}")
+            logging.info(f"Testing file path: {self.testing_file_path}")
         except Exception as e:
-            logging.error(f"Error initializing DataIngestionConfig: {e}")
+            logging.exception("Error initializing DataIngestionConfig")
             raise NetworkSecurityException(e, sys)
         
 class DataValidationConfig:
@@ -44,9 +49,13 @@ class DataValidationConfig:
             self.invalid_train_file_path: str = os.path.join(self.invalid_data_dir, training_pipeline.TRAIN_FILE_NAME)
             self.invalid_test_file_path: str = os.path.join(self.invalid_data_dir, training_pipeline.TEST_FILE_NAME)
             self.drift_report_file_path: str = os.path.join(self.data_validation_dir, training_pipeline.DATA_VALIDATION_DRIFT_REPORT_DIR, training_pipeline.DATA_VALIDATION_DRIFT_REPORT_FILE_NAME)
+            logging.info("DataValidationConfig initialized")
+            logging.info(f"Valid train path: {self.valid_train_file_path}")
+            logging.info(f"Valid test path: {self.valid_test_file_path}")
+            logging.info(f"Drift report path: {self.drift_report_file_path}")
 
         except Exception as e:
-            logging.error(f"Error initializing DataValidationConfig: {e}")
+            logging.exception("Error initializing DataValidationConfig")
             raise NetworkSecurityException(e, sys)
         
 class DataTransformationConfig:
@@ -57,7 +66,26 @@ class DataTransformationConfig:
             self.transformed_train_file_path: str = os.path.join(self.data_transformation_dir, training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR, training_pipeline.TRAIN_FILE_NAME.replace("csv", "npy"))
             self.transformed_test_file_path: str = os.path.join(self.data_transformation_dir, training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_DATA_DIR, training_pipeline.TEST_FILE_NAME.replace("csv", "npy"))
             self.transformed_object_file_path: str = os.path.join(self.data_transformation_dir, training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_OBJECT_DIR, training_pipeline.DATA_TRANSFORMATION_TRANSFORMED_OBJECT_FILE_NAME)
+            logging.info("DataTransformationConfig initialized")
+            logging.info(f"Transformed train file path: {self.transformed_train_file_path}")
+            logging.info(f"Transformed test file path: {self.transformed_test_file_path}")
+            logging.info(f"Transformed object file path: {self.transformed_object_file_path}")
         except Exception as e:
-            logging.error(f"Error initializing DataTransformationConfig: {e}")
+            logging.exception("Error initializing DataTransformationConfig")
             raise NetworkSecurityException(e, sys)  
-        
+
+class ModelTrainerConfig:
+
+    def __init__(self,training_pipeline_config: TrainingPipelineConfig):
+        try:
+            self.model_trainer_dir: str = os.path.join(training_pipeline_config.artifact_dir, training_pipeline.MODEL_TRAINER_DIR_NAME)
+            self.trained_model_file_path: str = os.path.join(self.model_trainer_dir, training_pipeline.MODEL_TRAINER_TRAINED_MODEL_DIR, training_pipeline.MODEL_TRAINER_TRAINED_MODEL_FILE_NAME)
+            self.expected_score: float = training_pipeline.MODEL_TRAINER_EXPECTED_SCORE
+            self.overfitting_underfitting_threshold: float = training_pipeline.MODEL_TRAINER_OVER_FITTING_UNDER_FITTING_THRESHOLD
+            logging.info("ModelTrainerConfig initialized")
+            logging.info(f"Trained model file path: {self.trained_model_file_path}")
+            logging.info(f"Expected model score: {self.expected_score}")
+            logging.info(f"Overfitting/underfitting threshold: {self.overfitting_underfitting_threshold}")
+        except Exception as e:
+            logging.exception("Error initializing ModelTrainerConfig")
+            raise NetworkSecurityException(e, sys)

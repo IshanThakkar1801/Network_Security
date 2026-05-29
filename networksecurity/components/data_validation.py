@@ -17,16 +17,21 @@ class DataValidation:
             self.data_validation_config = data_validation_config
             self.data_ingestion_artifact = data_ingestion_artifact
             self._schema_config = read_yaml_file(SCHEMA_FILE_PATH)
+            logging.info("DataValidation initialized")
+            logging.info(f"Schema loaded from: {SCHEMA_FILE_PATH}")
         except Exception as e:
-            logging.error(f"Error initializing DataValidation: {e}")
+            logging.exception("Error initializing DataValidation")
             raise NetworkSecurityException(e, sys)
         
     @staticmethod
     def read_data(file_path: str) -> pd.DataFrame:
         try:
-            return pd.read_csv(file_path)
+            logging.info(f"Reading data from: {file_path}")
+            dataframe = pd.read_csv(file_path)
+            logging.info(f"Read data from {file_path} with shape {dataframe.shape}")
+            return dataframe
         except Exception as e:
-            logging.error(f"Error reading data from {file_path}: {e}")
+            logging.exception(f"Error reading data from {file_path}")
             raise NetworkSecurityException(e, sys)
         
     def validate_no_of_columns(self, dataframe: pd.DataFrame) -> bool:
@@ -36,12 +41,14 @@ class DataValidation:
             if number_of_columns != actual_num_columns:
                 logging.warning(f"Expected {number_of_columns} columns, but got {actual_num_columns}")
                 return False
+            logging.info(f"Column validation passed with {actual_num_columns} columns")
             return True
         except Exception as e:
-            logging.error(f"Error validating number of columns: {e}")
+            logging.exception("Error validating number of columns")
             raise NetworkSecurityException(e, sys)
     def detect_data_drift(self, base_df: pd.DataFrame, current_df: pd.DataFrame, threshold = 0.05) -> bool:
         try:
+            logging.info("Started data drift detection")
             status = True
             report = {}
             for column in base_df.columns:
@@ -55,18 +62,20 @@ class DataValidation:
                 report[column] = {
                     "p_value": p_value,
                     "drift_status": status                }
-            logging.info(f"Data drift report: {report}")
+                logging.info(f"Column drift check - {column}: p_value={p_value}, drift_status={status}")
             drift_report_file_path = self.data_validation_config.drift_report_file_path
             os.makedirs(os.path.dirname(drift_report_file_path), exist_ok=True)
             write_yaml_file(file_path=drift_report_file_path, content=report, replace=True)
+            logging.info(f"Data drift report saved to: {drift_report_file_path}")
             return status
         except Exception as e:
-            logging.error(f"Error detecting data drift: {e}")
+            logging.exception("Error detecting data drift")
             raise NetworkSecurityException(e, sys)
         
 
     def initiate_data_validation(self) -> DataValidationArtifact:
         try:
+            logging.info("Started data validation component")
             train_file_path=self.data_ingestion_artifact.train_file_path
             test_file_path=self.data_ingestion_artifact.test_file_path
             ##Read the data from the Train and Test file location
@@ -86,6 +95,8 @@ class DataValidation:
             os.makedirs(dir_path, exist_ok=True)
             train_dataframe.to_csv(self.data_validation_config.valid_train_file_path, index=False)
             test_dataframe.to_csv(self.data_validation_config.valid_test_file_path, index=False)
+            logging.info(f"Validated train data saved to: {self.data_validation_config.valid_train_file_path}")
+            logging.info(f"Validated test data saved to: {self.data_validation_config.valid_test_file_path}")
             data_validation_artifact = DataValidationArtifact(
                     validation_status=drift_status,
                     valid_train_file_path=self.data_validation_config.valid_train_file_path,
@@ -94,7 +105,9 @@ class DataValidation:
                     invalid_test_file_path=self.data_validation_config.invalid_test_file_path,
                     drift_report_file_path=self.data_validation_config.drift_report_file_path
                 )
+            logging.info(f"Data validation artifact created: {data_validation_artifact}")
+            logging.info("Completed data validation component")
             return data_validation_artifact
         except Exception as e:
-            logging.error(f"Error during data validation: {e}")
+            logging.exception("Error during data validation")
             raise NetworkSecurityException(e, sys)

@@ -1,12 +1,12 @@
 import os
 import sys
-from networksecurity.exception.exception import exception
-from networksecurity.logging.logger import logger
+from networksecurity.exception.exception import NetworkSecurityException
+from networksecurity.logging.logger import logging
 from networksecurity.constant import training_pipeline
 from networksecurity.entity.config_entity import DataTransformationConfig,ModelTrainerConfig
 from networksecurity.entity.artifact_entity import ModelTrainerArtifact, ClassificationMetricArtifact, DataTransformationArtifact
 from sklearn.metrics import f1_score, precision_score, recall_score
-from networksecurity.utils.main_utils import save_numpy_array_data, load_numpy_array_data,save_object, load_object, evaluate_models
+from networksecurity.utils.main_utils.utils import save_numpy_array_data, load_numpy_array_data,save_object, load_object, evaluate_models
 from networksecurity.utils.ml_utils.metric.classification_metric import get_classification_score
 from networksecurity.utils.ml_utils.model.estimator import NetworkModel
 
@@ -15,6 +15,7 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
+import mlflow
 
 class ModelTrainer:
     def __init__(self, model_trainer_config: ModelTrainerConfig, data_transformation_artifact: DataTransformationArtifact):
@@ -22,9 +23,23 @@ class ModelTrainer:
             self.model_trainer_config = model_trainer_config
             self.data_transformation_artifact = data_transformation_artifact
         except Exception as e:
-            logger.error(f"Error initializing ModelTrainer: {e}")
-            raise exception(e, sys)
-    
+            logging.error(f"Error initializing ModelTrainer: {e}")
+            raise NetworkSecurityException(e, sys)
+    def track_mlflow(self,best_model,classificationmetric):
+        try:
+            with mlflow.start_run():
+                f1_score = classificationmetric.f1_score
+                precision_score = classificationmetric.precision_score
+                recall_score = classificationmetric.recall_score
+
+                mlflow.log_metric("f1_score",f1_score)
+                mlflow.log_metric("precision_score",precision_score)
+                mlflow.log_metric("recall_score",recall_score)
+                mlflow.sklearn.log_model(best_model,"model")
+
+        except Exception as e:
+            raise NetworkSecurityException(e,sys)
+
     def train_model(self, x_train, y_train, x_test, y_test):
         try:
             models = {
@@ -75,9 +90,12 @@ class ModelTrainer:
             classification_train_metric = get_classification_score(y_true=y_train, y_pred=y_train_pred)
 
             ## Track the mlflow
+            self.track_mlflow(best_model,classification_train_metric)
 
             y_test_pred = best_model.predict(x_test)
             classification_test_metric = get_classification_score(y_true=y_test,y_pred=y_test_pred)
+
+            self.track_mlflow(best_model,classification_test_metric)
 
             preprocessor = load_object(file_path = self.data_transformation_artifact.transformed_object_file_path)
 
@@ -85,7 +103,7 @@ class ModelTrainer:
             os.makedirs(model_dir_path,exist_ok=True)
 
             Network_Model = NetworkModel(preprocessor=preprocessor,model=best_model)
-            save_object(self.model_trainer_config.trained_model_file_path,obj = NetworkModel)
+            save_object(self.model_trainer_config.trained_model_file_path,obj = Network_Model)
 
             ## Model Trainer Artifact
 
@@ -94,8 +112,8 @@ class ModelTrainer:
             return model_trainer_artifact
             
         except Exception as e:
-            logger.error(f"Error training model: {e}")
-            raise exception(e, sys)
+            logging.error(f"Error training model: {e}")
+            raise NetworkSecurityException(e, sys)
     
     def initiate_model_trainer(self) -> ModelTrainerArtifact:
         try:
@@ -105,14 +123,14 @@ class ModelTrainer:
             x_train, y_train = train_arr[:,:-1], train_arr[:,-1]
             x_test, y_test = test_arr[:,:-1], test_arr[:,-1]
 
-            model = self.train_model(x_train, y_train)
+            model_trainer_artifact = self.train_model(
+                x_train,
+                y_train,
+                x_test,
+                y_test
+            )
 
-            save_object(file_path=self.model_trainer_config.trained_model_file_path, obj=model)
-
-            model_trainer_artifact = ModelTrainerArtifact(trained_model_file_path=self.model_trainer_config.trained_model_file_path)
             return model_trainer_artifact
         except Exception as e:
-            logger.error(f"Error initiating model trainer: {e}")
-            raise exception(e, sys)
-
-
+            logging.error(f"Error initiating model trainer: {e}")
+            raise NetworkSecurityException(e, sys)

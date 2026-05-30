@@ -1,13 +1,16 @@
 python-dotenv
 pandas
 numpy
-pymongo[srv]==3.12
 pymongo
 certifi
-typing
+pymongo[srv]
 scikit-learn
-dill
-pyaml
-scipy
 mlflow
-# -e .
+pyaml
+dagshub
+fastapi
+uvicorn
+python-multipart
+
+
+##-e .
